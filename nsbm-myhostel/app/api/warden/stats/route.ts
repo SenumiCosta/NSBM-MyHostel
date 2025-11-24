@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { users } from "@/lib/mockUsers";
-import { outingsForDay, outings } from "@/lib/mockOutings";
+import * as db from "@/lib/dbAdapter";
 
 export async function GET() {
   try {
@@ -8,8 +8,8 @@ export async function GET() {
     const totalStudents = allUsers.filter((u) => u.role === "student").length;
 
     // Outings that start today and are approved by parent or warden
-    const todayOutings = outingsForDay(new Date()).filter(
-      (o) => o.status === "parent_approved" || o.status === "warden_approved"
+    const todayOutings = (await db.outingsForDay(new Date())).filter(
+      (o: any) => o.status === "parent_approved" || o.status === "warden_approved"
     );
 
     const uniqueStudentsOut = new Set(todayOutings.map((o) => o.studentId)).size;

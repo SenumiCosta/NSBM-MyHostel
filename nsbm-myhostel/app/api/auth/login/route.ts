@@ -12,19 +12,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user by email
+    // Lookup user in the in-memory mockUsers (DB removed)
     const user = Object.values(users).find((u) => u.email === email);
 
     if (!user || user.password !== password) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    // Return user info and mock token
+    // Build returned profile (omit password)
     const { password: _, ...userProfile } = user;
-    const idToken = `token_${user.uid}_${Date.now()}`;
+    const idToken = `token_${userProfile.uid || userProfile.id}_${Date.now()}`;
 
     return NextResponse.json(
       {

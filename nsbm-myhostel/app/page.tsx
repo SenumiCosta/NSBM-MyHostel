@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import StudentLogin from "../components/StudentLogin";
-import ParentLogin from "../components/ParentLogin";
-import WardenLogin from "../components/WardenLogin";
-import SecurityLogin from "../components/SecurityLogin";
+import StudentLogin from "@/components/StudentLogin";
+import ParentLogin from "@/components/ParentLogin";
+import WardenLogin from "@/components/WardenLogin";
+import SecurityLogin from "@/components/SecurityLogin";
 
 type UserRole = "student" | "parent" | "warden" | "security" | null;
 

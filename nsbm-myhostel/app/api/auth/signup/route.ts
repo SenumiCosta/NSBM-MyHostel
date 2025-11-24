@@ -13,30 +13,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already exists
+    // Use in-memory users (DB removed)
     if (Object.values(users).some((u) => u.email === email)) {
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "User already exists" }, { status: 400 });
     }
-
-    // Create user
     const uid = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     users[uid] = {
       uid,
       email,
       name,
-      role,
+      role: role as UserRole,
       password: password, // In production, hash this!
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
-
-    return NextResponse.json(
-      { message: "User created successfully", uid, email, name, role },
-      { status: 201 }
-    );
+    return NextResponse.json({ message: "User created (mock)", uid, email, name, role }, { status: 201 });
   } catch (error: any) {
     console.error("Signup error:", error);
     return NextResponse.json(

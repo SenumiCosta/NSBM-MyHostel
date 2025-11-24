@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { OutingRequest } from "@/lib/types";
-import { outings } from "@/lib/mockOutings";
+import * as db from "@/lib/dbAdapter";
 
 // GET all outings (filter by student/parent/warden/security based on role)
 export async function GET(request: NextRequest) {
@@ -10,26 +10,7 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get("role");
     const status = searchParams.get("status");
 
-    let outingsArray: OutingRequest[] = Object.values(outings);
-
-    // Filter by role and userId
-    if (role === "student") {
-      outingsArray = outingsArray.filter((o) => o.studentId === userId);
-    } else if (role === "parent") {
-      outingsArray = outingsArray.filter((o) => o.parentId === userId);
-    } else if (role === "warden") {
-      // Wardens see all requests with status parent_approved
-      outingsArray = outingsArray.filter(
-        (o) => o.status === "parent_approved" || o.status === "warden_approved" || o.status === "warden_rejected"
-      );
-    } else if (role === "security") {
-      // Security sees all approved outings
-      outingsArray = outingsArray.filter((o) => o.status === "warden_approved");
-    }
-
-    if (status) {
-      outingsArray = outingsArray.filter((o) => o.status === status);
-    }
+    const outingsArray = await db.getOutings({ userId, role, status });
 
     return NextResponse.json({ outings: outingsArray }, { status: 200 });
   } catch (error: any) {
@@ -69,9 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     const id = `outing_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    const outingData: OutingRequest = {
-      id,
+    const created = await db.createOuting({
       studentId,
       studentName,
       parentId,
@@ -84,12 +63,7 @@ export async function POST(request: NextRequest) {
       tukNearHostel: !!tukNearHostel,
       isEmergency: !!isEmergency,
       emergencyReason: emergencyReason || undefined,
-      status: "pending",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-
-    outings[id] = outingData;
+    });
 
     return NextResponse.json(
       { message: "Outing request created", id },
@@ -119,12 +93,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const outing = outings[outingId];
+    const outing = await db.getOutingById(outingId);
     if (!outing) {
-      return NextResponse.json(
-        { error: "Outing not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Outing not found" }, { status: 404 });
     }
 
     // Prevent warden from approving a request that hasn't been parent-approved
@@ -152,7 +123,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    outings[outingId] = { ...outing, ...updateData };
+    await db.updateOuting(outingId, updateData as any);
 
     return NextResponse.json(
       { message: "Outing status updated" },
